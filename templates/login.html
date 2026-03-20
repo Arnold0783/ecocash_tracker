@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Smart EcoCash Tracker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(to right, #38bdf8, #1e3a8a);
+    }
+    .glass {
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(12px);
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    /* Modal backdrop */
+    .modal-bg {
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(3px);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center text-white p-4">
+
+  <div class="glass p-8 w-full max-w-md shadow-lg relative">
+    <h1 class="text-2xl font-bold mb-6 text-center">💳 Smart EcoCash Tracker</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="mb-4 p-2 rounded text-center
+                      {% if category=='error' %}bg-red-500{% else %}bg-green-500{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form action="{{ url_for('login') }}" method="POST" class="space-y-4">
+      <input type="text" name="username" placeholder="Username"
+             class="w-full p-3 rounded text-black" required>
+
+      <input type="password" name="password" placeholder="Password"
+             class="w-full p-3 rounded text-black" required>
+
+      <button class="w-full bg-blue-600 hover:bg-blue-800 p-3 rounded font-bold">
+        Login
+      </button>
+    </form>
+
+    <p class="mt-2 text-center text-sm">
+      <button id="forgotBtn" class="text-yellow-300 hover:underline">Forgot Password?</button>
+    </p>
+
+    <p class="mt-4 text-center text-sm">
+      Don't have an account?
+      <a href="{{ url_for('register') }}" class="text-yellow-300 hover:underline">Register here</a>
+    </p>
+  </div>
+
+  <!-- FORGOT PASSWORD MODAL -->
+  <div id="forgotModal" class="fixed inset-0 flex items-center justify-center hidden z-50">
+    <div class="modal-bg absolute inset-0"></div>
+    <div class="glass p-6 w-full max-w-sm relative z-10 shadow-lg">
+      <h2 class="text-xl font-bold mb-4 text-center">Reset Password</h2>
+      <p class="text-sm mb-4 text-center">Enter your username to receive reset instructions.</p>
+
+      <form id="forgotForm" class="space-y-4">
+        <input type="text" id="forgotUsername" placeholder="Username"
+               class="w-full p-3 rounded text-black" required>
+        <button type="submit" class="w-full bg-green-600 hover:bg-green-800 p-3 rounded font-bold">
+          Send Reset Link
+        </button>
+      </form>
+
+      <p class="mt-4 text-center text-sm">
+        <button id="closeModal" class="text-red-400 hover:underline">Cancel</button>
+      </p>
+    </div>
+  </div>
+
+  <!-- JS -->
+  <script>
+    const modal = document.getElementById('forgotModal');
+    const openBtn = document.getElementById('forgotBtn');
+    const closeBtn = document.getElementById('closeModal');
+    const forgotForm = document.getElementById('forgotForm');
+
+    openBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+    closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
+
+    forgotForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const username = document.getElementById('forgotUsername').value.trim();
+      if(username){
+        alert(`Reset instructions sent to the registered email for ${username} (simulation).`);
+        modal.classList.add('hidden');
+      }
+    });
+  </script>
+
+</body>
+</html>

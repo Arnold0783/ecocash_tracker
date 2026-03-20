@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart EcoCash Tracker</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    .glass {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(12px);
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+  </style>
+</head>
+
+<body class="bg-gradient-to-r from-sky-400 to-blue-900 text-white min-h-screen p-4">
+
+  <!-- HEADER -->
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl md:text-3xl font-bold">💳 Smart EcoCash Tracker</h1>
+
+    <div class="flex items-center gap-3">
+      <span class="text-sm">👤 {{ session.get('user_id') }}</span>
+
+      <a href="{{ url_for('logout') }}"
+         class="bg-red-500 hover:bg-red-700 px-3 py-1 rounded text-sm">
+         Logout
+      </a>
+    </div>
+  </div>
+
+  <!-- SMART ALERT -->
+  <div id="smart-alert" class="hidden bg-red-500 text-white p-3 rounded mb-4 text-center font-bold"></div>
+
+  <!-- LIVE RATE -->
+  <div class="glass p-3 mb-4 text-center">
+    💱 Live Rate: <span id="rate-text">Loading...</span>
+  </div>
+
+  <div class="flex flex-col md:flex-row gap-6">
+
+    <!-- LEFT PANEL -->
+    <div class="md:w-1/3 space-y-4">
+
+      <!-- SUMMARY -->
+      <div class="glass p-4 shadow-md">
+        <h2 class="text-xl font-bold mb-2">Summary (ZWL)</h2>
+
+        <p>Income: <span class="font-bold text-green-300">ZWL {{ income }}</span></p>
+        <p>Expense: <span class="font-bold text-red-300">ZWL {{ expense }}</span></p>
+        <p>Balance: <span class="font-bold text-blue-200">ZWL {{ balance }}</span></p>
+
+        <canvas id="incomeExpenseChart" class="mt-4"></canvas>
+
+        <div id="chart-data"
+             data-income="{{ income }}"
+             data-expense="{{ expense }}"></div>
+      </div>
+
+      <!-- MONTHLY -->
+      <div class="glass p-4 shadow-md">
+        <h2 class="text-xl font-bold mb-2">Monthly Trend</h2>
+
+        <canvas id="monthlyChart"></canvas>
+
+        <div id="monthly-data"
+             data-labels='{{ monthly_data.keys()|list }}'
+             data-values='{{ monthly_data.values()|list }}'>
+        </div>
+      </div>
+
+      <!-- AI INSIGHTS -->
+      <div class="glass p-4 shadow-md">
+        <h2 class="text-xl font-bold">Smart Insights</h2>
+        <p id="insight-text">Loading...</p>
+      </div>
+
+      <!-- BUDGET -->
+      <div class="glass p-4 shadow-md">
+        <h2 class="text-xl font-bold mb-2">Budget</h2>
+
+        <div class="space-y-3">
+
+          <div>
+            <p>Food: <span id="food-progress-text"></span></p>
+            <div class="w-full bg-gray-300 h-3 rounded">
+              <div id="food-progress" class="bg-green-500 h-3 rounded"></div>
+            </div>
+          </div>
+
+          <div>
+            <p>Airtime: <span id="airtime-progress-text"></span></p>
+            <div class="w-full bg-gray-300 h-3 rounded">
+              <div id="airtime-progress" class="bg-blue-500 h-3 rounded"></div>
+            </div>
+          </div>
+
+          <div>
+            <p>Bills: <span id="bills-progress-text"></span></p>
+            <div class="w-full bg-gray-300 h-3 rounded">
+              <div id="bills-progress" class="bg-red-500 h-3 rounded"></div>
+            </div>
+          </div>
+
+        </div>
+
+        <script id="category-data" type="application/json">
+          {{ category_totals | tojson }}
+        </script>
+      </div>
+
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="md:w-2/3 space-y-4">
+
+      <!-- FORM -->
+      <form action="{{ url_for('index') }}" method="POST"
+            class="glass p-4 shadow-md space-y-3">
+
+        <select name="type" class="p-2 rounded w-full text-black">
+          <option value="income">Income</option>
+          <option value="expense">Expense</option>
+        </select>
+
+        <input type="number" name="amount"
+               placeholder="Amount"
+               class="p-2 rounded w-full text-black"
+               required>
+
+        <select name="currency" class="p-2 rounded w-full text-black">
+          <option value="ZWL">ZWL</option>
+          <option value="USD">USD</option>
+        </select>
+
+        <input type="text" name="category" id="category-input"
+               placeholder="Category"
+               class="p-2 rounded w-full text-black">
+
+        <input type="text" name="description" id="desc-input"
+               placeholder="Description"
+               class="p-2 rounded w-full text-black">
+
+        <button class="bg-blue-600 hover:bg-blue-800 p-2 rounded w-full font-bold">
+          Add Transaction
+        </button>
+      </form>
+
+      <!-- EXPORT -->
+      <a href="{{ url_for('export_csv') }}"
+         class="bg-green-600 hover:bg-green-800 p-2 rounded w-full text-center block font-bold">
+        Export CSV
+      </a>
+
+      <!-- TRANSACTIONS -->
+      <div class="glass p-4 shadow-md max-h-96 overflow-y-auto">
+        <h2 class="text-xl font-bold mb-3">Transactions</h2>
+
+        {% for t in transactions %}
+        <div class="flex justify-between p-2 rounded mb-2
+          {% if t.type == 'income' %}bg-green-200/40{% else %}bg-red-200/40{% endif %}">
+
+          <div>
+            <p class="font-semibold">{{ t.category }} - {{ t.description }}</p>
+            <p class="text-sm opacity-70">{{ t.type }}</p>
+          </div>
+
+          <div class="font-bold">
+            {{ t.currency }} {{ "%.2f"|format(t.amount) }}
+          </div>
+        </div>
+        {% endfor %}
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- JS -->
+  <script src="{{ url_for('static', filename='main.js') }}"></script>
+
+  <!-- LIVE RATE DISPLAY -->
+  <script>
+    fetch('/rate')
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('rate-text').innerText =
+          "1 USD ≈ " + data.rate + " ZWL";
+      });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - Smart EcoCash Tracker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(to right, #38bdf8, #1e3a8a);
+    }
+    .glass {
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(12px);
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center text-white p-4">
+
+  <div class="glass p-8 w-full max-w-md shadow-lg relative">
+    <h1 class="text-2xl font-bold mb-6 text-center">💳 Smart EcoCash Tracker</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="mb-4 p-2 rounded text-center
+                      {% if category=='error' %}bg-red-500{% else %}bg-green-500{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form action="{{ url_for('register') }}" method="POST" class="space-y-4">
+      <input type="text" name="name" placeholder="First Name"
+             class="w-full p-3 rounded text-black" required>
+
+      <input type="text" name="surname" placeholder="Surname"
+             class="w-full p-3 rounded text-black" required>
+
+      <input type="text" name="phone" placeholder="Phone Number"
+             class="w-full p-3 rounded text-black" required>
+
+      <input type="text" name="address" placeholder="Home Address"
+             class="w-full p-3 rounded text-black" required>
+
+      <input type="text" name="username" placeholder="Username"
+             class="w-full p-3 rounded text-black" required>
+
+      <!-- Password -->
+      <div class="relative">
+        <input type="password" name="password" id="password" placeholder="Password"
+               class="w-full p-3 rounded text-black" required>
+        <button type="button" id="togglePwd" class="absolute right-3 top-3 text-sm text-gray-700">Show</button>
+      </div>
+
+      <!-- Confirm Password -->
+      <div class="relative">
+        <input type="password" name="confirm_password" id="confirm_password" placeholder="Confirm Password"
+               class="w-full p-3 rounded text-black" required>
+        <button type="button" id="toggleConfirmPwd" class="absolute right-3 top-3 text-sm text-gray-700">Show</button>
+      </div>
+
+      <!-- Password Strength -->
+      <div class="text-sm mb-2">
+        <span id="strength-text">Password strength: </span>
+      </div>
+
+      <button class="w-full bg-blue-600 hover:bg-blue-800 p-3 rounded font-bold">
+        Register
+      </button>
+    </form>
+
+    <p class="mt-4 text-center text-sm">
+      Already have an account?
+      <a href="{{ url_for('login') }}" class="text-yellow-300 hover:underline">Login here</a>
+    </p>
+  </div>
+
+  <!-- JS -->
+  <script>
+    const password = document.getElementById('password');
+    const confirmPwd = document.getElementById('confirm_password');
+    const togglePwd = document.getElementById('togglePwd');
+    const toggleConfirmPwd = document.getElementById('toggleConfirmPwd');
+    const strengthText = document.getElementById('strength-text');
+
+    // Toggle password visibility
+    togglePwd.addEventListener('click', () => {
+      if(password.type === 'password'){
+        password.type = 'text';
+        togglePwd.textContent = 'Hide';
+      } else {
+        password.type = 'password';
+        togglePwd.textContent = 'Show';
+      }
+    });
+
+    toggleConfirmPwd.addEventListener('click', () => {
+      if(confirmPwd.type === 'password'){
+        confirmPwd.type = 'text';
+        toggleConfirmPwd.textContent = 'Hide';
+      } else {
+        confirmPwd.type = 'password';
+        toggleConfirmPwd.textContent = 'Show';
+      }
+    });
+
+    // Password strength checker
+    password.addEventListener('input', () => {
+      const val = password.value;
+      let strength = "Weak";
+      let color = "red";
+
+      if(val.length >= 8 && /[A-Z]/.test(val) && /[0-9]/.test(val) && /[!@#$%^&*]/.test(val)){
+        strength = "Strong";
+        color = "green";
+      } else if(val.length >= 6){
+        strength = "Medium";
+        color = "yellow";
+      }
+
+      strengthText.textContent = `Password strength: ${strength}`;
+      strengthText.style.color = color;
+    });
+  </script>
+
+</body>
+</html>
